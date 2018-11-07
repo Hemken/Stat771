@@ -1,0 +1,14 @@
+.Rproj.user
+.Rhistory
+.RData
+.Ruserdata
+#.gitignore
+.ipynb_checkpoints/*
+erikalee/*
+mattstone/*
+ralphtrane/*
+refs/*
+tuowang/*
+*.ipynb_checkpoints*
+Thumbs.db
+*Exam*
