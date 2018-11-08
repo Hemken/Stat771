@@ -2,7 +2,9 @@
 title: "Newton Method HW"
 author: "Doug Hemken"
 date: "November 7, 2018"
-output: html_document
+output: 
+  html_document:
+    toc: true
 ---
 
 ```{r setup, include=FALSE}
@@ -30,7 +32,7 @@ knitr::opts_chunk$set(comment = NA)
 Denote $x$ as `x[1]` and $y$ as `x[2]`.
 
 - The main function
-    ```{r}
+    ```{r Fx}
     Fx <- function(z) {
       x <- z[1]
       y <- z[2]
@@ -42,7 +44,7 @@ Denote $x$ as `x[1]` and $y$ as `x[2]`.
     ```
     
 - The Jacobian
-    ```{r}
+    ```{r Jacobian}
     J <- function(z) {
       x <- z[1]
       y <- z[2]
@@ -57,64 +59,107 @@ Denote $x$ as `x[1]` and $y$ as `x[2]`.
     
 ### Newton's Method
 
-```{r}
-x0 <- c(0,0)
-i <- 1
-while (norm(as.matrix(Fx(x0)), "F") > 1e-8 && i <= 25) {
-  x <- solve(J(x0),-Fx(x0))+x0
-  x0 <- x
-  i <- i+1
+```{r newton_def}
+newton <- function (Fx, Jx, x0, eps=1e-8, max.iter=25) {
+  # Fx = function
+  # Jx = Jacobian of Fx
+  # x0 = initial guess
+  # eps = stopping threshold
+  # max.iter = maximum steps
+  i <- 1
+  while (norm(as.matrix(Fx(x0)), "F") > eps && i <= max.iter) {
+    x <- solve(Jx(x0),-Fx(x0))+x0
+    x0 <- x
+    i <- i+1
+  }
+  return(list(solution=x, iter=i))
 }
-x;i
+```
+```{r newtonuse1}
+x0 <- c(0,0)
+root <- newton(Fx, J, x0)
+root
 ```
 
 Check
-```{r}
-Fx(x)
+```{r check}
+Fx(root[["solution"]])
 ```
 
 Well, that was easy. Suppose we start someplace else.
 
-```{r}
+```{r newtonuse2}
 x0 <- c(5,5)
-i <- 1
-while (norm(as.matrix(Fx(x0)), "F") > 1e-8 && i <= 25) {
-  x <- solve(J(x0),-Fx(x0))+x0
-  x0 <- x
-  i <- i+1
-}
-x;i
+newton(Fx, J, x0)
 ```
 
-```{r}
+This won't get there.
+```{r newtonuse3}
 x0 <- c(-1,-1)
-i <- 1
-while (norm(as.matrix(Fx(x0)), "F") > 1e-8 && i <= 100) {
-  x <- solve(J(x0),-Fx(x0))+x0
-  x0 <- x
-  i <- i+1
-}
-x;i
+newton(Fx, J, x0, max.iter=100)
 ```
 
-```{r}
+```{r newtonuse4}
 x0 <- c(1,-1)
-i <- 1
-while (norm(as.matrix(Fx(x0)), "F") > 1e-8 && i <= 100) {
-  x <- solve(J(x0),-Fx(x0))+x0
-  x0 <- x
-  i <- i+1
-}
-x;i
+newton(Fx, J, x0, max.iter=100)
 ```
 
-```{r}
+```{r newtonuse5}
 x0 <- c(-1,1)
-i <- 1
-while (norm(as.matrix(Fx(x0)), "F") > 1e-8 && i <= 100) {
-  x <- solve(J(x0),-Fx(x0))+x0
-  x0 <- x
-  i <- i+1
+newton(Fx, J, x0, max.iter=100)
+```
+
+### Chord Method
+Only compute the Jacobian at some fixed interval, not at every step.
+
+```{r chord_def}
+chord <- function (Fx, Jx, x0, v=10, eps=1e-8, max.iter=25) {
+  # Fx = function
+  # Jx = Jacobian of Fx
+  # x0 = initial guess
+  # v = number of steps to hold Jacobian
+  # eps = stopping threshold
+  # max.iter = maximum steps
+  i <- 1
+  while (norm(as.matrix(Fx(x0)), "F") > eps && i <= max.iter) {
+    if (i%%v==1) J <- Jx(x0)
+    x <- solve(J,-Fx(x0))+x0
+    x0 <- x
+    i <- i+1
+  }
+  return(list(solution=x, iter=i))
 }
-x;i
+```
+
+This will take a few extra steps, because the Jacobian is usually inexact for the current estimate.
+
+```{r chord_use}
+x0 <- c(-1,1)
+chord(Fx,J,x0)
+```
+
+### Forward Difference Method
+In the Forward Difference Method, we replace the Jacobian with a "forward difference" approximation.
+
+```{r forward}
+fwddiff <- function(Fx, x0, eps) {
+  # Fx = function to difference/differentiate
+  # x0 = point at which to calculate the difference
+  # eps = step size of the approximation
+  n <- length(x)
+  g <- rep(0,n)
+  eye <- diag(1, nrow=n, ncol=n)
+  # print(x0)
+  # print(x0+eps*eye[,1])
+  for (i in 1:n) {
+    print((Fx(x0+eps*eye[,i]) - Fx(x0))/eps)
+    g[i] <- (Fx(x0+eps*eye[,i]) - Fx(x0))/eps
+  }
+  return(g)
+}
+```
+
+```{r checkfwd}
+fwddiff(Fx, x0, eps=0.01)
+J(x0)%*%x0
 ```
