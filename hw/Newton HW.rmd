@@ -72,7 +72,7 @@ newton <- function (Fx, Jx, x0, eps=1e-8, max.iter=25) {
     x0 <- x
     i <- i+1
   }
-  return(list(solution=x, iter=i))
+  return(list(solution=x0, iter=i))
 }
 ```
 ```{r newtonuse1}
@@ -122,18 +122,25 @@ chord <- function (Fx, Jx, x0, v=10, eps=1e-8, max.iter=25) {
   # max.iter = maximum steps
   i <- 1
   while (norm(as.matrix(Fx(x0)), "F") > eps && i <= max.iter) {
+#    print(i)
     if (i%%v==1) J <- Jx(x0)
     x <- solve(J,-Fx(x0))+x0
     x0 <- x
+#    print(x0)
+#    print(norm(as.matrix(Fx(x0)), "F"))
     i <- i+1
   }
-  return(list(solution=x, iter=i))
+  return(list(solution=x0, iter=i))
 }
 ```
 
 This will take a few extra steps, because the Jacobian is usually inexact for the current estimate.
 
-```{r chord_use}
+```{r chord_use1}
+x0 <- c(0,0)
+chord(Fx,J,x0)  # blows up
+```
+```{r chord_use5}
 x0 <- c(-1,1)
 chord(Fx,J,x0)
 ```

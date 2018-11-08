@@ -1,9 +1,10 @@
 F <- function (x) {3 - 2*x^2} # an quadratic function with two roots
+curve(F, -1.5, 1.5)
 f <- function (x) {-4*x} # the derivative function of F
 x <- 0.1 # note we cannot start at x==0
 while (abs(F(x))> 1e-8) {
   x <- x - F(x)/f(x)  # Newton's Method
-  print(x)
+  print(c(x, F(x)))
 }
 
 x <- -0.1 # note we cannot start at x==0
