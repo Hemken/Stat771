@@ -78,6 +78,7 @@ function backtrack(S,∇S₀,p,X₀,α₀ = 1.0, ρ = 0.5, c = 0.2)
   Sₐ = S₀ #Ensures appropriate scope of Sₐ
   try
     Sₐ = S(X₀ + α*p)
+  catch
   end
   funcEvals = 2
   while 0.5*dot(Sₐ,Sₐ) > condition(α)

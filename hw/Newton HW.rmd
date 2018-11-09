@@ -99,6 +99,47 @@ x0 <- c(-1,-1)
 newton(Fx, J, x0, max.iter=100)
 ```
 
+```{r backtrack}
+backtrack <- function (Fx,f,p,x0,alpha0 = 1.0, rho = 0.5, c = 0.2) {
+  Fx0 <- Fx(x0)
+  fx0 <- f(x0)
+  relaxSlope <- c*t(p)%*%(t(fx0)%*%Fx0)
+    
+  alpha <- alpha0
+  Fxtry <- Fx0
+  Fxtry <- Fx(x0 + alpha*p)
+
+  while (0.5*(Fxtry %*% Fxtry) > 0.5*(Fx0%*%Fx0) + alpha*relaxSlope[1]) {
+    alpha = rho*alpha
+    Fxtry = Fx(x0 + alpha*p)
+  }
+return(alpha)
+}
+```
+
+```{r newtonback}
+newtonback <- function (Fx, Jx, x0, eps=1e-8, max.iter=25) {
+  # Fx = function
+  # Jx = Jacobian of Fx
+  # x0 = initial guess
+  # eps = stopping threshold
+  # max.iter = maximum steps
+  i <- 1
+  while (norm(as.matrix(Fx(x0)), "F") > eps && i <= max.iter) {
+    p <- solve(Jx(x0), Fx(x0))
+    j <- Jx(x0)
+    alpha <- backtrack(Fx, J, x0, p)
+    x <- x0 + alpha*p
+    x0 <- x
+    i <- i+1
+  }
+  return(list(solution=x0, iter=i))
+}
+```
+```{r newtonuse3a}
+x0 <- c(-1,-1)
+newtonback(Fx, J, x0, max.iter=100)
+```
 ```{r newtonuse4}
 x0 <- c(1,-1)
 newton(Fx, J, x0, max.iter=100)
