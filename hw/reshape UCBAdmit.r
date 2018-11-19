@@ -1,8 +1,8 @@
 Admit <- UCBAdmissions
-Admit[1,,]
-Admit[2,,]
-Admit[,1,]
-Admit[,2,]
+# Admit[1,,]
+# Admit[2,,]
+# Admit[,1,]
+# Admit[,2,]
 
 df <- matrix(NA, ncol=4, nrow=24)
 l <- 0
@@ -51,9 +51,12 @@ admitll(coef(fit)+.01,Y,X,counts)
 admitll(coef(fit)-.01,Y,X,counts)
 
 admitgr <- function(B,Y,X,counts){
-  for (i in 1:5){
-    print((Y[i]-1/(1+exp(-X[i,]%*%B))))
-    
+  J <- matrix(NA, ncol=7,nrow=24)
+  for (i in 1:24){
+    J[i,] <- (as.vector(Y[i]-1/(1+exp(-X[i,]%*%B)))*X[i,])
+#  print((Y-1/(1+exp(-X%*%B))))
   }
+  colSums(J)
 }
 admitgr(B,Y,X,counts)
+admitgr(coef(fit),Y,X,counts)
