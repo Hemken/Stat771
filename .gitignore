@@ -8,7 +8,9 @@ erikalee/*
 mattstone/*
 ralphtrane/*
 refs/*
-tuowang/*
+ttuowang/*
 *.ipynb_checkpoints*
 Thumbs.db
 *Exam*
+*.png
+*.tex
