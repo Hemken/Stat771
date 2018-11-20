@@ -40,6 +40,7 @@ X
 B <- rep(1,7)
 Y <- df$admit
 counts <- df$count
+
 admitll <- function(B,Y,X,counts){
   sum(counts*(Y*(X%*%B)- log(1 + exp(X%*%B))))
 }
@@ -51,12 +52,19 @@ admitll(coef(fit)+.01,Y,X,counts)
 admitll(coef(fit)-.01,Y,X,counts)
 
 admitgr <- function(B,Y,X,counts){
-  J <- matrix(NA, ncol=7,nrow=24)
+  J <- matrix(NA, ncol=1,nrow=24)
   for (i in 1:24){
-    J[i,] <- (as.vector(Y[i]-1/(1+exp(-X[i,]%*%B)))*X[i,])
-#  print((Y-1/(1+exp(-X%*%B))))
+    J[i,] <- (Y[i]-1/(1+exp(-X[i,]%*%B)))
   }
-  colSums(J)
+  return(t(X)%*%J)
 }
-admitgr(B,Y,X,counts)
+
+alpha <- 0.001
+B <- rep(1,7)
+#B <- coef(fit)
+B.inc <- admitgr(B,Y,X,counts)
+B <- B + alpha*B.inc/norm(as.matrix(B.inc))
+B
+
 admitgr(coef(fit),Y,X,counts)
+
