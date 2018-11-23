@@ -1,7 +1,7 @@
 ---
 title: "Newton Method HW"
 author: "Doug Hemken"
-date: "November 7, 2018"
+date: "`r Sys.Date()`"
 output: 
   html_document:
     toc: true
@@ -100,18 +100,26 @@ newton(Fx, J, x0, max.iter=100)
 ```
 
 ```{r backtrack}
-backtrack <- function (Fx,f,p,x0,alpha0 = 1.0, rho = 0.5, c = 0.2) {
+backtrack <- function (Fx,J,p,x0,alpha0 = 1.0, rho = 0.5, c = 0.2) {
+  # Fx = function
+  # J  = Jacobian of Fx0
+  # p  = search direction
+  # x0 = current guess
+  # alpha0 = initial alpha
+  # rho= proportion to backtrack
+  # c  = relaxation parameter
   Fx0 <- Fx(x0)
-  fx0 <- f(x0)
-  relaxSlope <- c*t(p)%*%(t(fx0)%*%Fx0)
+#  fx0 <- J
+  relaxSlope <- c*t(p)%*%(t(J)%*%Fx0)
     
   alpha <- alpha0
-  Fxtry <- Fx0
   Fxtry <- Fx(x0 + alpha*p)
+  condition <- 0.5*(Fx0%*%Fx0) + alpha*relaxSlope[1]
 
-  while (0.5*(Fxtry %*% Fxtry) > 0.5*(Fx0%*%Fx0) + alpha*relaxSlope[1]) {
+  while (0.5*(Fxtry %*% Fxtry) > condition) {
     alpha = rho*alpha
     Fxtry = Fx(x0 + alpha*p)
+    condition <- 0.5*(Fx0%*%Fx0) + alpha*relaxSlope[1]
   }
 return(alpha)
 }
@@ -126,9 +134,9 @@ newtonback <- function (Fx, Jx, x0, eps=1e-8, max.iter=25) {
   # max.iter = maximum steps
   i <- 1
   while (norm(as.matrix(Fx(x0)), "F") > eps && i <= max.iter) {
-    p <- solve(Jx(x0), Fx(x0))
-    j <- Jx(x0)
-    alpha <- backtrack(Fx, J, x0, p)
+    p <- -solve(Jx(x0), Fx(x0))
+    J <- Jx(x0)
+    alpha <- backtrack(Fx, J, p, x0)
     x <- x0 + alpha*p
     x0 <- x
     i <- i+1
@@ -136,17 +144,21 @@ newtonback <- function (Fx, Jx, x0, eps=1e-8, max.iter=25) {
   return(list(solution=x0, iter=i))
 }
 ```
-```{r newtonuse3a}
-x0 <- c(-1,-1)
-newtonback(Fx, J, x0, max.iter=100)
+```{r newtonback1}
+x0 <- c(0,0)
+newtonback(Fx, J, x0)
 ```
-```{r newtonuse4}
-x0 <- c(1,-1)
-newton(Fx, J, x0, max.iter=100)
+```{r newtonback2}
+x0 <- c(5,5)
+newton(Fx, J, x0)
 ```
 
-```{r newtonuse5}
+```{r newtonback3}
 x0 <- c(-1,1)
+newton(Fx, J, x0)
+```
+```{r newtonback4}
+x0 <- c(-1,-1)
 newton(Fx, J, x0, max.iter=100)
 ```
 
@@ -163,12 +175,11 @@ chord <- function (Fx, Jx, x0, v=10, eps=1e-8, max.iter=25) {
   # max.iter = maximum steps
   i <- 1
   while (norm(as.matrix(Fx(x0)), "F") > eps && i <= max.iter) {
-#    print(i)
     if (i%%v==1) J <- Jx(x0)
-    x <- solve(J,-Fx(x0))+x0
+    p <- -solve(J, Fx(x0))
+    alpha <- backtrack(Fx, J, p, x0)
+    x <- x0 + alpha*p
     x0 <- x
-#    print(x0)
-#    print(norm(as.matrix(Fx(x0)), "F"))
     i <- i+1
   }
   return(list(solution=x0, iter=i))
@@ -179,9 +190,13 @@ This will take a few extra steps, because the Jacobian is usually inexact for th
 
 ```{r chord_use1}
 x0 <- c(0,0)
-chord(Fx,J,x0)  # blows up
+chord(Fx,J,x0)
 ```
-```{r chord_use5}
+```{r chord_use2}
+x0 <- c(5,5)
+chord(Fx,J,x0, max.iter=100)
+```
+```{r chord_use3}
 x0 <- c(-1,1)
 chord(Fx,J,x0)
 ```
@@ -194,20 +209,55 @@ fwddiff <- function(Fx, x0, eps) {
   # Fx = function to difference/differentiate
   # x0 = point at which to calculate the difference
   # eps = step size of the approximation
-  n <- length(x)
-  g <- rep(0,n)
-  eye <- diag(1, nrow=n, ncol=n)
-  # print(x0)
-  # print(x0+eps*eye[,1])
+  n <- length(x0)
+  g <- matrix(rep(NA,n^2), ncol=n)
+  eye <- diag(n)
   for (i in 1:n) {
-    print((Fx(x0+eps*eye[,i]) - Fx(x0))/eps)
-    g[i] <- (Fx(x0+eps*eye[,i]) - Fx(x0))/eps
+    g[,i] <- (Fx(x0+eps*eye[i,]) - Fx(x0))/eps
   }
   return(g)
+  # returns an approximate Jacobian
 }
 ```
 
 ```{r checkfwd}
-fwddiff(Fx, x0, eps=0.01)
-J(x0)%*%x0
+x0 <- c(1,1)
+fwddiff(Fx, x0, eps=0.001)
+J(x0)
+```
+```{r newtonfwd}
+newtonfwd <- function (Fx, x0, fwd.eps = 0.1, eps=1e-8, max.iter=25) {
+  # Fx = function
+  # x0 = initial guess
+  # eps = stopping threshold
+  # max.iter = maximum steps
+  i <- 1
+  while (norm(as.matrix(Fx(x0)), "F") > eps && i <= max.iter) {
+    J <- fwddiff(Fx, x0, eps=fwd.eps)
+    p <- -solve(J, Fx(x0))
+    alpha <- backtrack(Fx, J, p, x0)
+    x <- x0 + alpha*p
+    x0 <- x
+    i <- i+1
+  }
+  return(list(solution=x0, iter=i))
+}
+```
+```{r fwd_use1}
+x0 <- c(0,0)
+newtonfwd(Fx,x0)
+```
+```{r fwd_use2}
+x0 <- c(5,5)
+newtonfwd(Fx,x0)
+```
+
+```{r fwd_use3}
+x0 <- c(-1,1)
+newtonfwd(Fx,x0)
+```
+
+```{r fwd_use4}
+x0 <- c(-1,-1)
+newtonfwd(Fx,x0, max.iter=100)
 ```
