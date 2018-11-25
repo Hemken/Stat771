@@ -261,3 +261,6 @@ newtonfwd(Fx,x0)
 x0 <- c(-1,-1)
 newtonfwd(Fx,x0, max.iter=100)
 ```
+
+### Broyden's Method
+Iterative updates to the (iverse of) the Jacobian.

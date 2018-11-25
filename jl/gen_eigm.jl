@@ -4,7 +4,6 @@ function gen_eigm(d)
     Σ = diagm(0 => d) # diagonal matrix of eigenvalues
     n,m = size(Σ)
     V = rand(n,m)     # random matrix
-    Q,R = qr(V)       # orthonormalized
-    A = Q*Σ*Q'        # random A with given eigenvalues
+    A = inv(V)*Σ*V        # random A with given eigenvalues
     return A
 end
