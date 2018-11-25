@@ -114,6 +114,8 @@ backtrack <- function (Fx,J,p,x0,alpha0 = 1.0, rho = 0.5, c = 0.2) {
     
   alpha <- alpha0
   Fxtry <- Fx(x0 + alpha*p)
+#  print(Fx0)
+#  print(Fx0%*%Fx0)
   condition <- 0.5*(Fx0%*%Fx0) + alpha*relaxSlope[1]
 
   while (0.5*(Fxtry %*% Fxtry) > condition) {
@@ -134,8 +136,8 @@ newtonback <- function (Fx, Jx, x0, eps=1e-8, max.iter=25) {
   # max.iter = maximum steps
   i <- 1
   while (norm(as.matrix(Fx(x0)), "F") > eps && i <= max.iter) {
-    p <- -solve(Jx(x0), Fx(x0))
     J <- Jx(x0)
+    p <- -solve(J, Fx(x0))
     alpha <- backtrack(Fx, J, p, x0)
     x <- x0 + alpha*p
     x0 <- x
@@ -264,3 +266,41 @@ newtonfwd(Fx,x0, max.iter=100)
 
 ### Broyden's Method
 Iterative updates to the (iverse of) the Jacobian.
+
+The intial step uses the actual Jacobian to calculate the first iterate.
+```{r broyden}
+broyden <- function (Fx, Jx, x0, eps=1e-8, max.iter=25) {
+  D0 <- J(x0)  # initial Jacobian
+  Dinvk <- solve(D0) # initial Jacobian inverse
+  d0 <-  - Dinvk %*% Fx(x0) # first step
+  x <- x0 + d0 # current solution
+
+  i <- 1
+  while (norm(as.matrix(Fx(x)), "F") > eps && i <= max.iter) {
+    uk <- Dinvk %*% Fx(x) # next step
+    ck <- (t(d0) %*% (d0 + uk ))[1,1] # normalizing constant
+    Dinv <- Dinvk - (t(d0 %*% t(uk))%*%Dinvk)/ck
+    d0 <- - Dinv %*% Fx(x)
+    alpha <- 1
+  # alpha <- backtrack(Fx, J(x), as.vector(d0), x)
+  #  print(paste("alpha = ", alpha))
+    x <- x + alpha*d0
+    i <- i + 1
+  #  print(i)
+  #  print(norm(as.matrix(Fx(x)), "F"))
+    
+  }
+  return(list(solution=x, iter=i))
+}
+```
+
+```{r broydenuse}
+x0 <- c(0,0)
+broyden(Fx, J, x0, max.iter=100)
+
+x0 <- c(0,1)
+broyden(Fx, J, x0, max.iter=100)
+
+x0 <- c(.5,1.5)
+broyden(Fx, J, x0, max.iter=1000)
+```
