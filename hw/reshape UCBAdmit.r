@@ -47,24 +47,45 @@ admitll <- function(B,Y,X,counts){
 
 admitll(B,Y,X,counts)
 
+# Check the log-likelihood around the solution
 admitll(coef(fit),Y,X,counts)
+logLik(fit) # check
 admitll(coef(fit)+.01,Y,X,counts)
 admitll(coef(fit)-.01,Y,X,counts)
 
 admitgr <- function(B,Y,X,counts){
   J <- matrix(NA, ncol=1,nrow=24)
   for (i in 1:24){
-    J[i,] <- (Y[i]-1/(1+exp(-X[i,]%*%B)))
+    J[i,] <- (Y[i]-1/(1+exp(-X[i,]%*%B)))*counts[i]
   }
-  return(t(X)%*%J)
+  return((t(X)%*%J)/sum(counts))
 }
 
-alpha <- 0.001
 B <- rep(1,7)
-#B <- coef(fit)
-B.inc <- admitgr(B,Y,X,counts)
-B <- B + alpha*B.inc/norm(as.matrix(B.inc))
-B
+admitgr(B,Y,X,counts)
+# solve(admitgr(B,Y,X,counts), B)
+# B <- coef(fit)
+alpha <- 1
+n <- 3000
+i <- 0
+ll <- rep(NA, n)
+ngr <- rep(NA, n)
+while (norm(admitgr(B,Y,X,counts), "F") > 1e-8 && i < n) {
+#for (i in 1:n) {
+  i <- i+1
+  B.inc <- admitgr(B,Y,X,counts)
+  ngr[i] <- norm(as.matrix(B.inc), "F")
+  B <- B + alpha*B.inc #/norm(as.matrix(B.inc))
+  ll[i] <- admitll(B,Y,X,counts)
+}
 
-admitgr(coef(fit),Y,X,counts)
+B; i
+norm(admitgr(B,Y,X,counts), "F")
+admitll(B,Y,X,counts); logLik(fit)
+plot(ll)
+plot(ngr)
+coef(fit)
+
+# admitgr(coef(fit),Y,X,counts)
+norm(admitgr(coef(fit),Y,X,counts), "F")
 
