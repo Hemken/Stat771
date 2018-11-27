@@ -87,22 +87,29 @@ coef(fit)
 norm(admitgr(coef(fit),Y,X,counts), "F")
 
 B <- rep(1,7)
-H <- t(X)%*%diag(as.vector(1/(1+exp(-X%*%B))*(1-(1/(1+exp(-X%*%B)))))*counts)%*%X/sum(counts)
-H
+admithess <- function(B,Y,X,counts){
+  H <- (t(X)%*%diag(as.vector(1/(1+exp(-X%*%B))*(1-(1/(1+exp(-X%*%B)))))*counts)%*%X)/sum(counts)
+  return(H)
+}
+admithess(B,Y,X,counts)
 
 B <- rep(1,7)
-n <- 25
-i <- 0
+n <- 50
 ll <- rep(NA, n)
 ngr <- rep(NA, n)
+i <- 0
+alpha <- .5 # alpha<-1 does not work
 while (norm(admitgr(B,Y,X,counts), "F") > 1e-8 && i < n) {
   i <- i+1
-  B.inc <- solve(H)%*%admitgr(B,Y,X,counts)
-  ngr[i] <- norm(as.matrix(B.inc), "F")
+  gr <- admitgr(B,Y,X,counts)
+  H <- admithess(B,Y,X,counts)
+#  alpha <- 1/eigen(H)$values[1]
+  B.inc <- solve(H)%*%gr
   B <- B + alpha*B.inc
+  ngr[i] <- norm(as.matrix(B.inc), "F")
   ll[i] <- admitll(B,Y,X,counts)
 }
 cbind(B, coef(fit));i
 
-plot(ll)
-plot(ngr)
+plot(ll, main="Log-likelihood")
+plot(ngr, main="norm(Gradient)")
