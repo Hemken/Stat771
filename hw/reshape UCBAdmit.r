@@ -86,6 +86,7 @@ coef(fit)
 # admitgr(coef(fit),Y,X,counts)
 norm(admitgr(coef(fit),Y,X,counts), "F")
 
+B <- rep(1,7)
 H <- t(X)%*%diag(as.vector(1/(1+exp(-X%*%B))*(1-(1/(1+exp(-X%*%B)))))*counts)%*%X/sum(counts)
 H
 
