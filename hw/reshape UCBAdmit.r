@@ -35,7 +35,7 @@ fit <- glm(admit~female+dept, weight=count, data=df, family="binomial")
 summary(fit)
 
 X <- model.matrix(~female+dept, data=df)
-X
+# X
 
 B <- rep(1,7)
 Y <- df$admit
@@ -54,10 +54,7 @@ admitll(coef(fit)+.01,Y,X,counts)
 admitll(coef(fit)-.01,Y,X,counts)
 
 admitgr <- function(B,Y,X,counts){
-  J <- matrix(NA, ncol=1,nrow=24)
-  for (i in 1:24){
-    J[i,] <- (Y[i]-1/(1+exp(-X[i,]%*%B)))*counts[i]
-  }
+  J <- (Y-1/(1+exp(-X%*%B)))*counts
   return((t(X)%*%J)/sum(counts))
 }
 
@@ -89,3 +86,22 @@ coef(fit)
 # admitgr(coef(fit),Y,X,counts)
 norm(admitgr(coef(fit),Y,X,counts), "F")
 
+H <- t(X)%*%diag(as.vector(1/(1+exp(-X%*%B))*(1-(1/(1+exp(-X%*%B)))))*counts)%*%X/sum(counts)
+H
+
+B <- rep(1,7)
+n <- 25
+i <- 0
+ll <- rep(NA, n)
+ngr <- rep(NA, n)
+while (norm(admitgr(B,Y,X,counts), "F") > 1e-8 && i < n) {
+  i <- i+1
+  B.inc <- solve(H)%*%admitgr(B,Y,X,counts)
+  ngr[i] <- norm(as.matrix(B.inc), "F")
+  B <- B + alpha*B.inc
+  ll[i] <- admitll(B,Y,X,counts)
+}
+cbind(B, coef(fit));i
+
+plot(ll)
+plot(ngr)
