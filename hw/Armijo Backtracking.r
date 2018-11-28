@@ -2,6 +2,7 @@ Fx <- function (x) {3 - 2*x^2} # an quadratic function with two roots
 f <- function (x) {-4*x} # the derivative function of F
 
 curve(Fx, -1.5, 1.5)
+curve(Fx, -2, 2)
 abline(c(0,0))
 
 x <- 0.1 # note we cannot start at x==0
@@ -64,4 +65,6 @@ while (abs(Fx(x))> 1e-8 && iter<=10) {
   alpha <- alpha0
   iter<-iter+1
 }
+iterlog <- iterlog[!is.na(iterlog$iter),]
 print(iterlog)
+points(iterlog$Fx~iterlog$x, col="red", type="l")
